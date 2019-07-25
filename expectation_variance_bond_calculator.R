@@ -1,7 +1,8 @@
 ## This program is for calculating the expectation and variance of present value
 ## streams in an N-period bond.
 
-# This function reads input from the user
+# This function reads input from the user and returns the expected value and variance
+# of the payment streams created from the input parameters.
 read <- function() {
   r_c <<- as.numeric(readline(prompt = "Enter the coupon rate: "))
   r <<- as.numeric(readline(prompt = "Enter the discount rate: "))
@@ -32,13 +33,11 @@ PV <- function() {
   cMat[N, N] <- c + f
   
   # Second, create the discount rate vector
-  dr <- seq(0, 0, length.out = N)
-  z <- 1
-  for (k in z:N) {
-    for (l in 1:z) {
-      dr[k] <- dr[k] + ((1 + r) ^ -l)
-    }
-    z <- z + 1
+  dr <- matrix(data = 0,
+               nrow = N,
+               ncol = 1)
+  for (k in 1:N) {
+    dr[k] <- 1 / ((1 + r) ^ k)
   }
   
   #Now, multiply dr and cMat together
@@ -48,27 +47,38 @@ PV <- function() {
 
 # This function populates the vector for the probabilities.
 PD <- function() {
-  pdVec <- seq(0, 0, length.out = N)
-  for(i in 1:N-1){
-    pdVec[i]<-p_d*((1-p_d)^i)
+  pdVec <- matrix(data = 0,
+                 nrow = 1,
+                 ncol = N)
+  for(i in 1:N-1) {
+    pdVec[i] <- p_d * ((1 - p_d) ^ i)
   }
-  pdVec[N]<-((1-p_d)^N)
+  pdVec[N] <- ((1 - p_d) ^ N)
   return(pdVec)
 }
 
-# This function computes the expected value of the present value squared.
-# The result is to be used in the variance calculation.
-sEV<- function() {
-  sV <- PV()
-  for(i in 1:N){
-    sV[i] = sV[i] * sV[i]
+# This function computes the expected value
+EX <- function() {
+  return(t(PV()) %*% t(PD()))
+}
+
+# This function computes the variance
+Var <- function() {
+  E <- EX()
+  V <- PV()
+  for(i in 1:N) {
+    V[i] = (V[i] - E)^2
   }
-  return(t(sV) %*% PD()) 
+  return(t(V) %*% t(PD()))
+  
 }
 
 # This function returns the expected value and the variance for the bond
 EV <- function() {
-  E <- t(PV()) %*% PD()
-  V <- sEV() - (E^2)
-  return(c("The expected value is: ", round(E, digits = 3), "The variance is: ", round(V, digits = 3)))
+  return(c(
+    "The expected value is: ",
+    round(EX(), digits = 3),
+    "The variance is: ",
+    round(Var(), digits = 3)
+  ))
 }
