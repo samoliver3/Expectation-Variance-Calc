@@ -17,30 +17,24 @@ read <- function() {
 # This function calculates the present value for N payment streams
 PV <- function() {
   c <- r_c * f
-  # First, create the coupon matrix
+  # First, create the coupon and discount rate matrices.
   cMat <- matrix(data = 0,
                  nrow = N,
                  ncol = N)
-  x <- 1
+  dr <- matrix(data = 0,
+               nrow = N,
+               ncol = 1)
   y <- 1
-  for (i in x:N) {
+  for (i in 1:N) {
+    dr[i] <- 1 / ((1 + r) ^ i)
     for (j in y:N) {
       cMat[j, i] <- c
     }
-    x <- x + 1
     y <- y + 1
   }
   cMat[N, N] <- c + f
   
-  # Second, create the discount rate vector
-  dr <- matrix(data = 0,
-               nrow = N,
-               ncol = 1)
-  for (k in 1:N) {
-    dr[k] <- 1 / ((1 + r) ^ k)
-  }
-  
-  #Now, multiply dr and cMat together
+  # Now, multiply dr and cMat together and return the result
   V <- cMat %*% dr
   return(V)
 }
@@ -70,12 +64,11 @@ Var <- function() {
     V[i] = (V[i] - E)^2
   }
   return(t(V) %*% t(PD()))
-  
 }
 
 # This function returns the expected value and the variance for the bond
 EV <- function() {
-  return(c(
+    return(c(
     "The expected value is: ",
     round(EX(), digits = 3),
     "The variance is: ",
